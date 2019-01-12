@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	region, vpccidr string = "ap-northeast-1", "172.18.128.0"
+	region           = "ap-northeast-1"
+	vpcCidr, vpcName = "172.18.152.0/24", "testaws01-vpnb1"
 )
 
 func main() {
@@ -20,7 +21,9 @@ func main() {
 
 	// create vpc
 	createout, err := client.CreateVpc(&ec2.CreateVpcInput{
-		CidrBlock: aws.String(vpccidr),
+		CidrBlock:                   aws.String(vpcCidr),
+		AmazonProvidedIpv6CidrBlock: aws.Bool(false),
+		InstanceTenancy:             aws.String("default"),
 	})
 	if err != nil {
 		log.Fatalln("02", err)
@@ -28,4 +31,12 @@ func main() {
 
 	vpc := createout.Vpc
 	fmt.Println("VPC created:", *vpc.VpcId)
+
+	// name this vpc
+	_, err = client.CreateTags(&ec2.CreateTagsInput{
+		Tags: []*ec2.Tag{
+			{Key: aws.String("Name"), Value: aws.String(vpcName)},
+		},
+		Resources: []*string{vpc.VpcId},
+	})
 }
